@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Restaurant Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f172a; --card: #1e293b; --border: #334155;
+      --text: #f1f5f9; --muted: #94a3b8;
+      --primary: #f97316; --primary-hover: #ea580c;
+      --success: #22c55e; --danger: #ef4444; --warning: #eab308;
+      --radius: 12px;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'Inter',system-ui,sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    nav {
+      background:var(--card); border-bottom:1px solid var(--border);
+      height:60px; padding:0 24px; display:flex; align-items:center; justify-content:space-between;
+      position:sticky; top:0; z-index:100;
+    }
+    .logo { font-weight:700; font-size:1.25rem; color:var(--primary); }
+    .nav-links { display:flex; gap:6px; align-items:center; }
+    .nav-links button {
+      background:none; border:none; color:var(--muted); font-size:0.9rem; font-weight:500;
+      padding:8px 14px; border-radius:8px; cursor:pointer; transition:0.2s;
+    }
+    .nav-links button:hover, .nav-links button.active {
+      background:rgba(249,115,22,0.15); color:var(--primary);
+    }
+    .user-badge {
+      background:rgba(249,115,22,0.2); color:var(--primary);
+      padding:3px 10px; border-radius:20px; font-size:0.75rem; font-weight:600;
+    }
+
+    main { max-width:1200px; margin:0 auto; padding:28px 20px; }
+    .page { display:none; }
+    .page.active { display:block; }
+
+    h1 { font-size:1.6rem; margin-bottom:6px; }
+    .subtitle { color:var(--muted); margin-bottom:24px; font-size:0.95rem; }
+
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:18px; }
+    .card {
+      background:var(--card); border:1px solid var(--border); border-radius:var(--radius);
+      padding:20px; transition:0.2s;
+    }
+    .card:hover { border-color:var(--primary); }
+
+    .btn {
+      display:inline-flex; align-items:center; gap:6px; padding:9px 16px;
+      border-radius:8px; font-size:0.875rem; font-weight:500; border:none; cursor:pointer; transition:0.2s;
+    }
+    .btn-primary { background:var(--primary); color:white; }
+    .btn-primary:hover { background:var(--primary-hover); }
+    .btn-outline { background:transparent; border:1px solid var(--border); color:var(--text); }
+    .btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+    .btn-sm { padding:6px 12px; font-size:0.8rem; }
+    .btn-danger { background:rgba(239,68,68,0.15); color:var(--danger); }
+
+    .status {
+      font-size:0.72rem; font-weight:600; padding:3px 10px; border-radius:20px; text-transform:uppercase;
+    }
+    .status-available { background:rgba(34,197,94,0.15); color:var(--success); }
+    .status-occupied { background:rgba(239,68,68,0.15); color:var(--danger); }
+    .status-reserved { background:rgba(234,179,8,0.15); color:var(--warning); }
+    .status-pending { background:rgba(234,179,8,0.15); color:var(--warning); }
+    .status-preparing { background:rgba(59,130,246,0.15); color:#3b82f6; }
+    .status-ready, .status-confirmed { background:rgba(34,197,94,0.15); color:var(--success); }
+    .status-completed, .status-served { background:rgba(148,163,184,0.2); color:var(--muted); }
+    .status-cancelled { background:rgba(239,68,68,0.15); color:var(--danger); }
+
+    /* Auth */
+    .auth-box {
+      max-width:400px; margin:60px auto; background:var(--card);
+      border:1px solid var(--border); border-radius:16px; padding:32px;
+    }
+    .form-group { margin-bottom:16px; }
+    .form-group label { display:block; font-size:0.82rem; color:var(--muted); margin-bottom:5px; font-weight:500; }
+    .form-group input, .form-group select, .form-group textarea {
+      width:100%; padding:10px 12px; background:var(--bg); border:1px solid var(--border);
+      border-radius:8px; color:var(--text); font-size:0.9rem; outline:none;
+    }
+    .form-group input:focus, .form-group select:focus { border-color:var(--primary); }
+
+    .alert {
+      padding:11px 14px; border-radius:8px; margin-bottom:16px; font-size:0.875rem; display:none;
+    }
+    .alert-error { background:rgba(239,68,68,0.15); color:var(--danger); border:1px solid rgba(239,68,68,0.3); }
+    .alert-success { background:rgba(34,197,94,0.15); color:var(--success); }
+
+    .page-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
+    .stats { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:16px; margin-bottom:28px; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:18px; }
+    .stat-card .label { font-size:0.8rem; color:var(--muted); }
+    .stat-card .value { font-size:1.6rem; font-weight:700; margin-top:4px; }
+
+    .table-row {
+      background:var(--card); border:1px solid var(--border); border-radius:10px;
+      padding:14px 18px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; gap:12px;
+    }
+
+    .empty { text-align:center; padding:50px 20px; color:var(--muted); }
+    .loading { text-align:center; padding:40px; color:var(--muted); }
+
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.65); display:none;
+      align-items:center; justify-content:center; z-index:200; padding:20px;
+    }
+    .modal-overlay.active { display:flex; }
+    .modal {
+      background:var(--card); border:1px solid var(--border); border-radius:16px;
+      padding:26px; width:100%; max-width:480px; max-height:90vh; overflow-y:auto;
+    }
+    .modal h2 { margin-bottom:18px; }
+    .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; }
+
+    .price { color:var(--primary); font-weight:600; }
+    .category-tag {
+      font-size:0.7rem; background:rgba(249,115,22,0.15); color:var(--primary);
+      padding:2px 8px; border-radius:6px; font-weight:500;
+    }
+
+    @media(max-width:600px) {
+      .grid { grid-template-columns:1fr; }
+      .table-row { flex-direction:column; align-items:flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <nav>
+    <div class="logo">🍽️ Restaurant Manager</div>
+    <div class="nav-links" id="navLinks"></div>
+  </nav>
+
+  <main>
+    <!-- AUTH -->
+    <div id="authPage" class="page">
+      <div class="auth-box">
+        <h1 style="text-align:center;margin-bottom:4px">Welcome</h1>
+        <p class="subtitle" style="text-align:center">Login to manage the restaurant</p>
+        <div id="authAlert" class="alert"></div>
+        <form id="authForm">
+          <div class="form-group">
+            <label>Email</label>
+            <input type="email" id="email" value="admin@restaurant.com" required>
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="password" value="password123" required>
+          </div>
+          <button type="submit" class="btn btn-primary" style="width:100%;margin-top:8px">Login</button>
+        </form>
+        <p style="text-align:center;margin-top:16px;font-size:0.85rem;color:var(--muted)">
+          Demo: admin@restaurant.com / password123
+        </p>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboardPage" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Dashboard</h1>
+          <p class="subtitle">Overview of restaurant operations</p>
+        </div>
+      </div>
+      <div class="stats" id="statsGrid">
+        <div class="stat-card"><div class="label">Today's Orders</div><div class="value" id="statOrders">-</div></div>
+        <div class="stat-card"><div class="label">Today's Sales</div><div class="value" id="statSales">-</div></div>
+        <div class="stat-card"><div class="label">Available Tables</div><div class="value" id="statTables">-</div></div>
+        <div class="stat-card"><div class="label">Low Stock Alerts</div><div class="value" id="statAlerts">-</div></div>
+      </div>
+      <h2 style="margin-bottom:14px;font-size:1.15rem">Recent Orders</h2>
+      <div id="recentOrders"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- MENU -->
+    <div id="menuPage" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Menu</h1>
+          <p class="subtitle">All available dishes</p>
+        </div>
+      </div>
+      <div id="menuList" class="grid"><div class="loading">Loading menu...</div></div>
+    </div>
+
+    <!-- TABLES -->
+    <div id="tablesPage" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Tables</h1>
+          <p class="subtitle">Current table status</p>
+        </div>
+      </div>
+      <div id="tablesList" class="grid"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- ORDERS -->
+    <div id="ordersPage" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Orders</h1>
+          <p class="subtitle">Manage all orders</p>
+        </div>
+        <button class="btn btn-primary" onclick="openOrderModal()">+ New Order</button>
+      </div>
+      <div id="ordersList"><div class="loading">Loading...</div></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div id="inventoryPage" class="page">
+      <div class="page-header">
+        <div>
+          <h1>Inventory</h1>
+          <p class="subtitle">Stock levels & alerts</p>
+        </div>
+      </div>
+      <div id="inventoryList"><div class="loading">Loading...</div></div>
+    </div>
+  </main>
+
+  <!-- New Order Modal -->
+  <div class="modal-overlay" id="orderModal">
+    <div class="modal">
+      <h2>Place New Order</h2>
+      <div id="orderAlert" class="alert"></div>
+      <form id="orderForm">
+        <div class="form-group">
+          <label>Order Type</label>
+          <select id="orderType">
+            <option value="dine_in">Dine In</option>
+            <option value="takeaway">Takeaway</option>
+            <option value="delivery">Delivery</option>
+          </select>
+        </div>
+        <div class="form-group" id="tableGroup">
+          <label>Table</label>
+          <select id="orderTable"></select>
+        </div>
+        <div class="form-group">
+          <label>Customer Name (optional)</label>
+          <input type="text" id="orderCustomer">
+        </div>
+        <div class="form-group">
+          <label>Items (select menu items)</label>
+          <div id="orderItemsList" style="max-height:200px;overflow-y:auto;"></div>
+        </div>
+        <div class="form-group">
+          <label>Notes</label>
+          <input type="text" id="orderNotes" placeholder="Extra spicy, no onions...">
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-outline" onclick="closeOrderModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Place Order</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+<script>
+  let token = localStorage.getItem('token');
+  let currentUser = JSON.parse(localStorage.getItem('user') || 'null');
+  let menuCache = [];
+
+  async function api(path, options = {}) {
+    const headers = { 'Content-Type': 'application/json', ...options.headers };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(path, { ...options, headers });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || 'Request failed');
+    return data;
+  }
+
+  function showAlert(id, msg, type='error') {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.className = `alert alert-${type}`;
+    el.style.display = 'block';
+  }
+
+  // Navigation
+  function updateNav() {
+    const nav = document.getElementById('navLinks');
+    if (!currentUser) {
+      nav.innerHTML = '';
+      return;
+    }
+    nav.innerHTML = `
+      <button onclick="showPage('dashboard')" id="nav-dashboard">Dashboard</button>
+      <button onclick="showPage('menu')" id="nav-menu">Menu</button>
+      <button onclick="showPage('tables')" id="nav-tables">Tables</button>
+      <button onclick="showPage('orders')" id="nav-orders">Orders</button>
+      <button onclick="showPage('inventory')" id="nav-inventory">Inventory</button>
+      <span class="user-badge">${currentUser.role}</span>
+      <button class="btn btn-outline btn-sm" onclick="logout()">Logout</button>
+    `;
+  }
+
+  function showPage(page) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById(page + 'Page').classList.add('active');
+    document.querySelectorAll('#navLinks button').forEach(b => b.classList.remove('active'));
+    document.getElementById('nav-' + page)?.classList.add('active');
+
+    if (page === 'dashboard') loadDashboard();
+    if (page === 'menu') loadMenu();
+    if (page === 'tables') loadTables();
+    if (page === 'orders') loadOrders();
+    if (page === 'inventory') loadInventory();
+  }
+
+  // Auth
+  document.getElementById('authForm').onsubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const data = await api('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({
+          email: document.getElementById('email').value,
+          password: document.getElementById('password').value
+        })
+      });
+      token = data.token;
+      currentUser = data.user;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(currentUser));
+      updateNav();
+      showPage('dashboard');
+    } catch (err) {
+      showAlert('authAlert', err.message);
+    }
+  };
+
+  function logout() {
+    token = null; currentUser = null;
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    updateNav();
+    showPage('auth');
+  }
+
+  // Dashboard
+  async function loadDashboard() {
+    try {
+      const [sales, tables, alerts, orders] = await Promise.all([
+        api('/api/inventory/reports/daily-sales'),
+        api('/api/tables?status=available'),
+        api('/api/inventory/alerts'),
+        api('/api/orders')
+      ]);
+      document.getElementById('statOrders').textContent = sales.data.order_count;
+      document.getElementById('statSales').textContent = '$' + sales.data.total_sales.toFixed(2);
+      document.getElementById('statTables').textContent = tables.count;
+      document.getElementById('statAlerts').textContent = alerts.count;
+
+      const recent = (orders.data || []).slice(0, 5);
+      document.getElementById('recentOrders').innerHTML = recent.length ? recent.map(o => `
+        <div class="table-row">
+          <div>
+            <strong>#${o.id}</strong> · ${o.order_type} ${o.table_number ? '· Table '+o.table_number : ''}
+            <div style="font-size:0.82rem;color:var(--muted);margin-top:3px">
+              ${o.items?.map(i => i.name + ' ×' + i.quantity).join(', ') || ''}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span class="price">$${o.total_amount?.toFixed(2)}</span>
+            <span class="status status-${o.status}">${o.status}</span>
+          </div>
+        </div>
+      `).join('') : '<div class="empty">No orders yet</div>';
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  // Menu
+  async function loadMenu() {
+    const el = document.getElementById('menuList');
+    try {
+      const data = await api('/api/menu');
+      menuCache = data.data;
+      el.innerHTML = data.data.map(item => `
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+            <h3 style="font-size:1.05rem">${item.name}</h3>
+            <span class="price">$${item.price.toFixed(2)}</span>
+          </div>
+          <p style="font-size:0.85rem;color:var(--muted);margin-bottom:10px">${item.description || ''}</p>
+          <span class="category-tag">${item.category || 'General'}</span>
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<div class="empty">${err.message}</div>`;
+    }
+  }
+
+  // Tables
+  async function loadTables() {
+    const el = document.getElementById('tablesList');
+    try {
+      const data = await api('/api/tables');
+      el.innerHTML = data.data.map(t => `
+        <div class="card" style="text-align:center">
+          <div style="font-size:2rem;margin-bottom:8px">🪑</div>
+          <h3>Table ${t.table_number}</h3>
+          <p style="color:var(--muted);font-size:0.85rem;margin:6px 0">${t.capacity} seats · ${t.location}</p>
+          <span class="status status-${t.status}">${t.status}</span>
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<div class="empty">${err.message}</div>`;
+    }
+  }
+
+  // Orders
+  async function loadOrders() {
+    const el = document.getElementById('ordersList');
+    try {
+      const data = await api('/api/orders');
+      if (!data.data.length) {
+        el.innerHTML = '<div class="empty">No orders yet. Create one!</div>';
+        return;
+      }
+      el.innerHTML = data.data.map(o => `
+        <div class="table-row">
+          <div>
+            <strong>Order #${o.id}</strong>
+            <span style="color:var(--muted);font-size:0.85rem"> · ${o.order_type}${o.table_number ? ' · Table '+o.table_number : ''}</span>
+            <div style="font-size:0.82rem;color:var(--muted);margin-top:4px">
+              ${o.items.map(i => `${i.name} ×${i.quantity}`).join(', ')}
+            </div>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span class="price">$${o.total_amount?.toFixed(2)}</span>
+            <span class="status status-${o.status}">${o.status}</span>
+            ${o.status !== 'completed' && o.status !== 'cancelled' ? `
+              <select onchange="updateOrderStatus(${o.id}, this.value)" style="background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 8px;border-radius:6px;font-size:0.8rem">
+                <option value="">Update...</option>
+                <option value="preparing">Preparing</option>
+                <option value="ready">Ready</option>
+                <option value="served">Served</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancel</option>
+              </select>
+            ` : ''}
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<div class="empty">${err.message}</div>`;
+    }
+  }
+
+  async function updateOrderStatus(id, status) {
+    if (!status) return;
+    try {
+      await api(`/api/orders/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+      loadOrders();
+      loadDashboard();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  // New Order Modal
+  async function openOrderModal() {
+    document.getElementById('orderModal').classList.add('active');
+    document.getElementById('orderAlert').style.display = 'none';
+
+    // Load available tables
+    const tables = await api('/api/tables?status=available');
+    document.getElementById('orderTable').innerHTML = tables.data.map(t =>
+      `<option value="${t.id}">Table ${t.table_number} (${t.capacity} seats)</option>`
+    ).join('') || '<option value="">No available tables</option>';
+
+    // Load menu items with quantity inputs
+    if (!menuCache.length) {
+      const menu = await api('/api/menu');
+      menuCache = menu.data;
+    }
+    document.getElementById('orderItemsList').innerHTML = menuCache.map(item => `
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)">
+        <span style="font-size:0.9rem">${item.name} <span class="price">$${item.price.toFixed(2)}</span></span>
+        <input type="number" min="0" value="0" data-id="${item.id}" class="order-qty"
+          style="width:60px;padding:4px 8px;background:var(--bg);border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:center">
+      </div>
+    `).join('');
+  }
+
+  function closeOrderModal() {
+    document.getElementById('orderModal').classList.remove('active');
+  }
+
+  document.getElementById('orderType').onchange = function() {
+    document.getElementById('tableGroup').style.display = this.value === 'dine_in' ? 'block' : 'none';
+  };
+
+  document.getElementById('orderForm').onsubmit = async (e) => {
+    e.preventDefault();
+    const items = [];
+    document.querySelectorAll('.order-qty').forEach(input => {
+      const qty = parseInt(input.value);
+      if (qty > 0) items.push({ menu_item_id: parseInt(input.dataset.id), quantity: qty });
+    });
+
+    if (!items.length) {
+      showAlert('orderAlert', 'Please select at least one item');
+      return;
+    }
+
+    try {
+      await api('/api/orders', {
+        method: 'POST',
+        body: JSON.stringify({
+          order_type: document.getElementById('orderType').value,
+          table_id: document.getElementById('orderType').value === 'dine_in'
+            ? parseInt(document.getElementById('orderTable').value) : null,
+          customer_name: document.getElementById('orderCustomer').value,
+          notes: document.getElementById('orderNotes').value,
+          items
+        })
+      });
+      closeOrderModal();
+      loadOrders();
+      loadDashboard();
+      loadTables();
+    } catch (err) {
+      showAlert('orderAlert', err.message);
+    }
+  };
+
+  // Inventory
+  async function loadInventory() {
+    const el = document.getElementById('inventoryList');
+    try {
+      const data = await api('/api/inventory');
+      el.innerHTML = data.data.map(item => `
+        <div class="table-row">
+          <div>
+            <strong>${item.item_name}</strong>
+            <span style="color:var(--muted);font-size:0.85rem"> · ${item.unit}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px">
+            <span style="font-weight:600;${item.is_low ? 'color:var(--danger)' : ''}">${item.quantity} ${item.unit}</span>
+            ${item.is_low ? '<span class="status status-cancelled">Low Stock</span>' : '<span class="status status-available">OK</span>'}
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      el.innerHTML = `<div class="empty">${err.message}</div>`;
+    }
+  }
+
+  // Init
+  updateNav();
+  if (currentUser) {
+    showPage('dashboard');
+  } else {
+    showPage('auth');
+  }
+</script>
+</body>
+</html>
